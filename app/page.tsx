@@ -2,25 +2,30 @@
 
 import { SolonaWallet } from "@/lib/derivation/solona";
 import { generateNewMnemonic } from "@/lib/mnemonic/generateMnemonic";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function Home() {
   const [mnemonics, setMnemonics] = useState("");
   const [publicKey, setPublicKey] = useState<string | undefined>("");
   const [secretKey, setSecretKey] = useState<string | undefined>("");
   const [visible, setVisible] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   async function generateWallet() {
-    const mnemonicsString = generateNewMnemonic();
-    setMnemonics(mnemonicsString);
-    const keyPair = SolonaWallet(mnemonicsString);
-    setPublicKey(keyPair.publicKey);
-    setSecretKey(keyPair.secretKey);
+    try {
+      setLoading(true);
+      const mnemonicsString = generateNewMnemonic();
+      setMnemonics(mnemonicsString);
+      const keyPair = SolonaWallet(mnemonicsString);
+      setPublicKey(keyPair.publicKey);
+      setSecretKey(keyPair.secretKey);
+      setLoading(false);
+    } catch (e) {
+      console.log("Error occured while creating wallet", e);
+    } finally {
+      setLoading(false);
+    }
   }
-
-  // if (mnemonics.length === 0) {
-  //   return <div>Loading..</div>;
-  // }
 
   async function copyMnemonics(text: string) {
     try {
@@ -32,13 +37,17 @@ export default function Home() {
 
   return (
     <div className=" flex flex-col items-center justify-center">
-      <div className="flex flex-col gap-4">
-        <div className="mt-10 flex items-start">
+      <div className="flex flex-col justify-center gap-4">
+        <div className="mt-10">
           <button
             onClick={() => generateWallet()}
-            className="px-6 py-2 bg-orange-400 rounded-md"
+            className="px-6 py-2 w-60 bg-orange-400 rounded-md flex items-center justify-center"
           >
-            generate wallet
+            {loading ? (
+              <span className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"></span>
+            ) : (
+              <p>generate solona wallet</p>
+            )}
           </button>
         </div>
         {secretKey && (
@@ -56,7 +65,7 @@ export default function Home() {
                 }}
                 className="mt-4 cursor-pointer px-4 py-1.5 bg-yellow-400 rounded-md text-black"
               >
-                copy
+                copy phrase
               </button>
             </div>
 
