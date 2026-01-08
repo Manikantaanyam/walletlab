@@ -1,6 +1,7 @@
 "use client";
 
 import { CRYPTOS } from "@/constants/constant";
+import EthereumWallet from "@/lib/derivation/ethers";
 import { SolonaWallet } from "@/lib/derivation/solona";
 import { generateNewMnemonic } from "@/lib/mnemonic/generateMnemonic";
 import { Copy, Eye, EyeOff, RefreshCw, ShieldAlert } from "lucide-react";
@@ -12,15 +13,21 @@ export default function Home() {
   const [secretKey, setSecretKey] = useState<string | undefined>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [cryptoName, setCryptoName] = useState<string>("Solana");
 
   async function generateWallet() {
     try {
       setLoading(true);
       const mnemonicsString = generateNewMnemonic();
       setMnemonics(mnemonicsString);
-      const keyPair = SolonaWallet(mnemonicsString);
-      setPublicKey(keyPair.publicKey);
-      setSecretKey(keyPair.secretKey);
+      let keyPair;
+      if (cryptoName === "Solana") {
+        keyPair = SolonaWallet(mnemonicsString);
+      } else {
+        keyPair = EthereumWallet(mnemonicsString);
+      }
+      setPublicKey(keyPair?.publicKey);
+      setSecretKey(keyPair?.secretKey);
       setLoading(false);
     } catch (e) {
       console.log("Error occured while creating wallet", e);
@@ -48,7 +55,10 @@ export default function Home() {
           <div className="flex gap-3">
             {CRYPTOS.map((crypto) => (
               <button
-                className="px-3 py-1 bg-red-500/50 rounded-md hover:bg-red-500"
+                onClick={() => setCryptoName(crypto.name)}
+                className={`px-3 py-1.5 rounded-md cursor-pointer text-sm ${
+                  cryptoName == crypto.name ? "bg-red-500 " : "bg-red-500/50 "
+                }`}
                 key={crypto.id}
               >
                 {crypto.name}
@@ -61,12 +71,12 @@ export default function Home() {
           <button
             onClick={generateWallet}
             disabled={loading}
-            className="group relative flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-xl transition-all active:scale-95 disabled:opacity-70"
+            className="group relative flex items-center gap-2 cursor-pointer bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-xl transition-all active:scale-95 disabled:opacity-70"
           >
             {loading ? (
               <RefreshCw className="w-5 h-5 animate-spin" />
             ) : (
-              "Generate New Wallet"
+              `Generate ${cryptoName} Wallet`
             )}
           </button>
         </div>
